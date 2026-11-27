@@ -14,6 +14,8 @@ import {
   Moon,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import heroDocumentWorkspace from '../assets/images/hero_document_workspace_1795796325315.jpg';
+import featureHybridArchitecture from '../assets/images/feature_hybrid_architecture_1795796325207.jpg';
 
 export default function LandingPage() {
   const { user, theme, toggleTheme, loadCompetitionDemo } = useApp();
@@ -118,7 +120,7 @@ export default function LandingPage() {
           <div className="lg:col-span-6">
             <div className="h-full min-h-[320px] rounded-xl overflow-hidden border border-[var(--border-hairline)] bg-slate-100 dark:bg-slate-900 relative">
               <img
-                src="/src/assets/images/hero_document_workspace_1795796325315.jpg"
+                src={heroDocumentWorkspace}
                 alt="Printed application documents and sleek dark navy laptop in natural morning window light"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
@@ -229,7 +231,7 @@ export default function LandingPage() {
           <div className="lg:col-span-5">
             <div className="rounded-xl overflow-hidden border border-[var(--border-hairline)] bg-slate-100 dark:bg-slate-900 aspect-[4/3]">
               <img
-                src="/src/assets/images/feature_hybrid_architecture_1795796325207.jpg"
+                src={featureHybridArchitecture}
                 alt="Minimalist frosted glass prisms and brushed aluminum blocks symbolizing on-device and cloud AI routing"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"

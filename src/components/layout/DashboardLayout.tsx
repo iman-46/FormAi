@@ -23,6 +23,7 @@ import { useApp } from '../../contexts/AppContext';
 import { AIStatusBadge } from '../ai/AIStatusBadge';
 import { CloudConsentModal } from '../ai/CloudConsentModal';
 import { resendVerificationEmail } from '../../firebase/auth';
+import avatarDemoUser from '../../assets/images/avatar_demo_user_1795796326117.jpg';
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Overview', Icon: LayoutDashboard },
@@ -162,7 +163,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         {user ? (
           <div className="flex items-center gap-3">
             <img
-              src={user.photoURL || '/src/assets/images/avatar_demo_user_1795796326117.jpg'}
+              src={user.photoURL || avatarDemoUser}
               alt={user.displayName || 'Account avatar'}
               referrerPolicy="no-referrer"
               className="w-8 h-8 rounded-full object-cover border border-slate-700 shrink-0"
