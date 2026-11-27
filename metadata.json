@@ -2,5 +2,7 @@
   "name": "FormWise AI",
   "description": "Upload any document. Understand everything. Know exactly what to do next. Hybrid on-device and cloud AI document understanding built with Firebase AI Logic.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
