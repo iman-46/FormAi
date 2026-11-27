@@ -1,0 +1,261 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user account profile isolated per user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "maxLength": 254 },
+        "displayName": { "type": "string", "maxLength": 120 },
+        "photoURL": { "type": "string", "maxLength": 512 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email", "displayName", "createdAt", "updatedAt"]
+    },
+    "UserPreferences": {
+      "title": "UserPreferences",
+      "description": "User workspace preferences for theme, inference routing, language, and retention.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "theme": { "type": "string", "enum": ["light", "dark"] },
+        "defaultInferenceMode": {
+          "type": "string",
+          "enum": ["prefer_on_device", "prefer_in_cloud", "only_on_device", "only_in_cloud"]
+        },
+        "preferredLanguage": { "type": "string", "enum": ["Simple English", "Hindi", "Bengali", "Spanish", "French"] },
+        "autoSaveToFirestore": { "type": "boolean" },
+        "saveExtractedText": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "theme",
+        "defaultInferenceMode",
+        "preferredLanguage",
+        "autoSaveToFirestore",
+        "saveExtractedText",
+        "updatedAt"
+      ]
+    },
+    "WorkspaceDocument": {
+      "title": "WorkspaceDocument",
+      "description": "Uploaded or pasted document metadata, optional extracted text, and AI summary/simplifications.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "fileName": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "mimeType": { "type": "string", "maxLength": 120 },
+        "fileSize": { "type": "number" },
+        "pageCount": { "type": "number" },
+        "extractionStatus": { "type": "string", "enum": ["ready", "needs_ocr", "error", "processing"] },
+        "isScanned": { "type": "boolean" },
+        "isDemo": { "type": "boolean" },
+        "extractedText": { "type": "string", "maxLength": 250000 },
+        "summary": { "type": "string", "maxLength": 20000 },
+        "simplificationLevel": { "type": "string", "enum": ["very_simple", "standard", "detailed"] },
+        "simplifiedLanguage": { "type": "string", "maxLength": 40 },
+        "simplifiedClauses": { "type": "array" },
+        "lastInferenceSource": { "type": "string", "enum": ["on_device", "in_cloud", "none"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "title",
+        "fileName",
+        "mimeType",
+        "fileSize",
+        "pageCount",
+        "extractionStatus",
+        "isScanned",
+        "isDemo",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ActionTask": {
+      "title": "ActionTask",
+      "description": "Action plan task item extracted from or added for a document.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "docId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+        "completed": { "type": "boolean" },
+        "deadline": { "type": "string", "maxLength": 64 },
+        "sourceReference": { "type": "string", "maxLength": 400 },
+        "order": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "docId", "title", "description", "priority", "completed", "order", "createdAt", "updatedAt"]
+    },
+    "RequirementItem": {
+      "title": "RequirementItem",
+      "description": "Required or optional supporting document identified in a document.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "docId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "mandatory": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["available", "missing", "not_applicable", "needs_verification"] },
+        "sourceQuote": { "type": "string", "maxLength": 600 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "docId", "name", "mandatory", "status", "createdAt", "updatedAt"]
+    },
+    "DeadlineEvent": {
+      "title": "DeadlineEvent",
+      "description": "Extracted deadline or milestone date from a document.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "docId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "category": { "type": "string", "enum": ["application", "verification", "payment", "exam", "interview", "event"] },
+        "dateText": { "type": "string", "maxLength": 120 },
+        "isoDate": { "type": "string", "maxLength": 40 },
+        "needsVerification": { "type": "boolean" },
+        "sourceQuote": { "type": "string", "maxLength": 600 },
+        "addedToTasks": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "docId", "title", "category", "dateText", "needsVerification", "addedToTasks", "createdAt", "updatedAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Grounded Ask Your Document message persisted in user chat history.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "docId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "role": { "type": "string", "enum": ["user", "assistant"] },
+        "content": { "type": "string", "minLength": 1, "maxLength": 20000 },
+        "citations": { "type": "array" },
+        "uncertain": { "type": "boolean" },
+        "inferenceSource": { "type": "string", "enum": ["on_device", "in_cloud", "none"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "docId", "role", "content", "uncertain", "inferenceSource", "createdAt"]
+    },
+    "AiActivityLog": {
+      "title": "AiActivityLog",
+      "description": "Recorded hybrid AI execution telemetry event (no raw document text stored).",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "docId": { "type": "string", "maxLength": 128 },
+        "docTitle": { "type": "string", "maxLength": 240 },
+        "operation": {
+          "type": "string",
+          "enum": ["summarize", "simplify", "action_plan", "deadlines", "requirements", "translate", "chat", "compare", "ocr"]
+        },
+        "requestedMode": {
+          "type": "string",
+          "enum": ["prefer_on_device", "prefer_in_cloud", "only_on_device", "only_in_cloud"]
+        },
+        "inferenceSource": { "type": "string", "enum": ["on_device", "in_cloud", "error"] },
+        "usedFallback": { "type": "boolean" },
+        "modelId": { "type": "string", "maxLength": 120 },
+        "latencyMs": { "type": "number" },
+        "status": { "type": "string", "enum": ["success", "error"] },
+        "errorMessage": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "operation",
+        "requestedMode",
+        "inferenceSource",
+        "usedFallback",
+        "modelId",
+        "latencyMs",
+        "status",
+        "createdAt"
+      ]
+    },
+    "DocumentComparison": {
+      "title": "DocumentComparison",
+      "description": "Cloud AI comparison result between two workspace documents.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "docAId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "docATitle": { "type": "string", "maxLength": 240 },
+        "docBId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "docBTitle": { "type": "string", "maxLength": 240 },
+        "similarities": { "type": "array" },
+        "differences": { "type": "array" },
+        "changedDeadlines": { "type": "array" },
+        "differentRequirements": { "type": "array" },
+        "conflictingInstructions": { "type": "array" },
+        "importantChanges": { "type": "array" },
+        "inferenceSource": { "type": "string", "enum": ["on_device", "in_cloud"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "docAId",
+        "docATitle",
+        "docBId",
+        "docBTitle",
+        "similarities",
+        "differences",
+        "changedDeadlines",
+        "differentRequirements",
+        "conflictingInstructions",
+        "importantChanges",
+        "inferenceSource",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user account profile document."
+    },
+    "/users/{userId}/preferences/{prefId}": {
+      "schema": { "$ref": "#/entities/UserPreferences" },
+      "description": "User workspace preferences and retention settings."
+    },
+    "/users/{userId}/documents/{docId}": {
+      "schema": { "$ref": "#/entities/WorkspaceDocument" },
+      "description": "User-owned uploaded or pasted documents and analyses."
+    },
+    "/users/{userId}/documents/{docId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/ActionTask" },
+      "description": "Action plan tasks linked to a specific document."
+    },
+    "/users/{userId}/documents/{docId}/requirements/{reqId}": {
+      "schema": { "$ref": "#/entities/RequirementItem" },
+      "description": "Document requirement checklist items linked to a specific document."
+    },
+    "/users/{userId}/documents/{docId}/deadlines/{deadlineId}": {
+      "schema": { "$ref": "#/entities/DeadlineEvent" },
+      "description": "Deadlines and event dates extracted from a specific document."
+    },
+    "/users/{userId}/documents/{docId}/chats/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Multi-turn grounded Q&A messages for a specific document."
+    },
+    "/users/{userId}/aiLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AiActivityLog" },
+      "description": "Hybrid AI telemetry logs recording actual inference sources."
+    },
+    "/users/{userId}/comparisons/{compId}": {
+      "schema": { "$ref": "#/entities/DocumentComparison" },
+      "description": "Saved two-document comparison reports."
+    }
+  }
+}

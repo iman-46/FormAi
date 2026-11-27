@@ -1,0 +1,440 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ---------------------------------------------------------
+    // Global Hardened Primitives
+    // ---------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isVerifiedOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function parentDocumentExists(userId, docId) {
+      return exists(/databases/$(database)/documents/users/$(userId)/documents/$(docId));
+    }
+
+    function isValidBoundedList(arr, maxLen) {
+      return arr is list && arr.size() <= maxLen;
+    }
+
+    // ---------------------------------------------------------
+    // Validation Blueprints
+    // ---------------------------------------------------------
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['userId', 'email', 'displayName', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'email', 'displayName', 'photoURL', 'createdAt', 'updatedAt'])
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 254
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 120
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 512))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUserPreferences(data, userId) {
+      return data.keys().hasAll([
+          'userId', 'theme', 'defaultInferenceMode', 'preferredLanguage',
+          'autoSaveToFirestore', 'saveExtractedText', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'userId', 'theme', 'defaultInferenceMode', 'preferredLanguage',
+          'autoSaveToFirestore', 'saveExtractedText', 'updatedAt'
+        ])
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && data.theme in ['light', 'dark']
+        && data.defaultInferenceMode in ['prefer_on_device', 'prefer_in_cloud', 'only_on_device', 'only_in_cloud']
+        && data.preferredLanguage in ['Simple English', 'Hindi', 'Bengali', 'Spanish', 'French']
+        && data.autoSaveToFirestore is bool
+        && data.saveExtractedText is bool
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWorkspaceDocument(data, userId) {
+      return data.keys().hasAll([
+          'userId', 'title', 'fileName', 'mimeType', 'fileSize', 'pageCount',
+          'extractionStatus', 'isScanned', 'isDemo', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'userId', 'title', 'fileName', 'mimeType', 'fileSize', 'pageCount',
+          'extractionStatus', 'isScanned', 'isDemo', 'extractedText', 'summary',
+          'simplificationLevel', 'simplifiedLanguage', 'simplifiedClauses',
+          'lastInferenceSource', 'createdAt', 'updatedAt'
+        ])
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 240
+        && data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 240
+        && data.mimeType is string && data.mimeType.size() >= 1 && data.mimeType.size() <= 120
+        && data.fileSize is number && data.fileSize >= 0 && data.fileSize <= 104857600
+        && data.pageCount is number && data.pageCount >= 0 && data.pageCount <= 5000
+        && data.extractionStatus in ['ready', 'needs_ocr', 'error', 'processing']
+        && data.isScanned is bool
+        && data.isDemo is bool
+        && (!('extractedText' in data) || (data.extractedText is string && data.extractedText.size() <= 250000))
+        && (!('summary' in data) || (data.summary is string && data.summary.size() <= 20000))
+        && (!('simplificationLevel' in data) || data.simplificationLevel in ['very_simple', 'standard', 'detailed'])
+        && (!('simplifiedLanguage' in data) || (data.simplifiedLanguage is string && data.simplifiedLanguage.size() <= 40))
+        && (!('simplifiedClauses' in data) || isValidBoundedList(data.simplifiedClauses, 40))
+        && (!('lastInferenceSource' in data) || data.lastInferenceSource in ['on_device', 'in_cloud', 'none'])
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidActionTask(data, userId, docId) {
+      return data.keys().hasAll([
+          'userId', 'docId', 'title', 'description', 'priority',
+          'completed', 'order', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'userId', 'docId', 'title', 'description', 'priority',
+          'completed', 'deadline', 'sourceReference', 'order', 'createdAt', 'updatedAt'
+        ])
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && data.docId == docId
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 240
+        && data.description is string && data.description.size() <= 2000
+        && data.priority in ['high', 'medium', 'low']
+        && data.completed is bool
+        && (!('deadline' in data) || (data.deadline is string && data.deadline.size() <= 64))
+        && (!('sourceReference' in data) || (data.sourceReference is string && data.sourceReference.size() <= 400))
+        && data.order is number && data.order >= 0 && data.order <= 10000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidRequirementItem(data, userId, docId) {
+      return data.keys().hasAll(['userId', 'docId', 'name', 'mandatory', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'userId', 'docId', 'name', 'mandatory', 'status', 'sourceQuote', 'notes', 'createdAt', 'updatedAt'
+        ])
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && data.docId == docId
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 240
+        && data.mandatory is bool
+        && data.status in ['available', 'missing', 'not_applicable', 'needs_verification']
+        && (!('sourceQuote' in data) || (data.sourceQuote is string && data.sourceQuote.size() <= 600))
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 1000))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidDeadlineEvent(data, userId, docId) {
+      return data.keys().hasAll([
+          'userId', 'docId', 'title', 'category', 'dateText',
+          'needsVerification', 'addedToTasks', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'userId', 'docId', 'title', 'category', 'dateText', 'isoDate',
+          'needsVerification', 'sourceQuote', 'addedToTasks', 'createdAt', 'updatedAt'
+        ])
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && data.docId == docId
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 240
+        && data.category in ['application', 'verification', 'payment', 'exam', 'interview', 'event']
+        && data.dateText is string && data.dateText.size() >= 1 && data.dateText.size() <= 120
+        && (!('isoDate' in data) || (data.isoDate is string && data.isoDate.size() <= 40))
+        && data.needsVerification is bool
+        && (!('sourceQuote' in data) || (data.sourceQuote is string && data.sourceQuote.size() <= 600))
+        && data.addedToTasks is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidChatMessage(data, userId, docId) {
+      return data.keys().hasAll(['userId', 'docId', 'role', 'content', 'uncertain', 'inferenceSource', 'createdAt'])
+        && data.keys().hasOnly(['userId', 'docId', 'role', 'content', 'citations', 'uncertain', 'inferenceSource', 'createdAt'])
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && data.docId == docId
+        && data.role in ['user', 'assistant']
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 20000
+        && (!('citations' in data) || isValidBoundedList(data.citations, 25))
+        && data.uncertain is bool
+        && data.inferenceSource in ['on_device', 'in_cloud', 'none']
+        && data.createdAt is timestamp;
+    }
+
+    function isValidAiLog(data, userId) {
+      return data.keys().hasAll([
+          'userId', 'operation', 'requestedMode', 'inferenceSource',
+          'usedFallback', 'modelId', 'latencyMs', 'status', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'userId', 'docId', 'docTitle', 'operation', 'requestedMode',
+          'inferenceSource', 'usedFallback', 'modelId', 'latencyMs', 'status',
+          'errorMessage', 'createdAt'
+        ])
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && (!('docId' in data) || (data.docId is string && data.docId.size() <= 128))
+        && (!('docTitle' in data) || (data.docTitle is string && data.docTitle.size() <= 240))
+        && data.operation in [
+          'summarize', 'simplify', 'action_plan', 'deadlines',
+          'requirements', 'translate', 'chat', 'compare', 'ocr'
+        ]
+        && data.requestedMode in ['prefer_on_device', 'prefer_in_cloud', 'only_on_device', 'only_in_cloud']
+        && data.inferenceSource in ['on_device', 'in_cloud', 'error']
+        && data.usedFallback is bool
+        && data.modelId is string && data.modelId.size() >= 1 && data.modelId.size() <= 120
+        && data.latencyMs is number && data.latencyMs >= 0 && data.latencyMs <= 600000
+        && data.status in ['success', 'error']
+        && (!('errorMessage' in data) || (data.errorMessage is string && data.errorMessage.size() <= 500))
+        && data.createdAt is timestamp;
+    }
+
+    function isValidComparison(data, userId) {
+      return data.keys().hasAll([
+          'userId', 'docAId', 'docATitle', 'docBId', 'docBTitle',
+          'similarities', 'differences', 'changedDeadlines', 'differentRequirements',
+          'conflictingInstructions', 'importantChanges', 'inferenceSource', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'userId', 'docAId', 'docATitle', 'docBId', 'docBTitle',
+          'similarities', 'differences', 'changedDeadlines', 'differentRequirements',
+          'conflictingInstructions', 'importantChanges', 'inferenceSource', 'createdAt'
+        ])
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && isValidId(data.docAId)
+        && data.docATitle is string && data.docATitle.size() >= 1 && data.docATitle.size() <= 240
+        && isValidId(data.docBId)
+        && data.docBTitle is string && data.docBTitle.size() >= 1 && data.docBTitle.size() <= 240
+        && isValidBoundedList(data.similarities, 40)
+        && isValidBoundedList(data.differences, 40)
+        && isValidBoundedList(data.changedDeadlines, 40)
+        && isValidBoundedList(data.differentRequirements, 40)
+        && isValidBoundedList(data.conflictingInstructions, 40)
+        && isValidBoundedList(data.importantChanges, 40)
+        && data.inferenceSource in ['on_device', 'in_cloud']
+        && data.createdAt is timestamp;
+    }
+
+    // ---------------------------------------------------------
+    // Collection Rules
+    // ---------------------------------------------------------
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isVerifiedOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt']);
+      allow delete: if isValidId(userId) && isVerifiedOwner(userId);
+
+      match /preferences/{prefId} {
+        allow get: if isValidId(userId) && prefId == 'settings' && isVerifiedOwner(userId);
+        allow list: if false;
+        allow create: if isValidId(userId)
+          && prefId == 'settings'
+          && isVerifiedOwner(userId)
+          && isValidUserPreferences(incoming(), userId)
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && prefId == 'settings'
+          && isVerifiedOwner(userId)
+          && isValidUserPreferences(incoming(), userId)
+          && incoming().userId == existing().userId
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'theme', 'defaultInferenceMode', 'preferredLanguage',
+            'autoSaveToFirestore', 'saveExtractedText', 'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && prefId == 'settings' && isVerifiedOwner(userId);
+      }
+
+      match /documents/{docId} {
+        allow get: if isValidId(userId) && isValidId(docId) && isVerifiedOwner(userId);
+        allow list: if isVerifiedOwner(userId) && existing().userId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(docId)
+          && isVerifiedOwner(userId)
+          && isValidWorkspaceDocument(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isValidId(docId)
+          && isVerifiedOwner(userId)
+          && isValidWorkspaceDocument(incoming(), userId)
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'extractionStatus', 'isScanned', 'extractedText', 'updatedAt'
+            ])
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'summary', 'simplificationLevel', 'simplifiedLanguage',
+              'simplifiedClauses', 'lastInferenceSource', 'updatedAt'
+            ])
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'extractedText', 'summary', 'simplificationLevel',
+              'simplifiedLanguage', 'simplifiedClauses', 'lastInferenceSource', 'updatedAt'
+            ])
+          );
+        allow delete: if isValidId(userId) && isValidId(docId) && isVerifiedOwner(userId);
+
+        match /tasks/{taskId} {
+          allow get: if isValidId(userId) && isValidId(docId) && isValidId(taskId) && isVerifiedOwner(userId);
+          allow list: if isVerifiedOwner(userId) && existing().userId == request.auth.uid;
+          allow create: if isValidId(userId)
+            && isValidId(docId)
+            && isValidId(taskId)
+            && isVerifiedOwner(userId)
+            && isValidActionTask(incoming(), userId, docId)
+            && parentDocumentExists(userId, docId)
+            && incoming().createdAt == request.time
+            && incoming().updatedAt == request.time;
+          allow update: if isValidId(userId)
+            && isValidId(docId)
+            && isValidId(taskId)
+            && isVerifiedOwner(userId)
+            && isValidActionTask(incoming(), userId, docId)
+            && incoming().userId == existing().userId
+            && incoming().docId == existing().docId
+            && incoming().createdAt == existing().createdAt
+            && incoming().updatedAt == request.time
+            && (
+              incoming().diff(existing()).affectedKeys().hasOnly(['completed', 'updatedAt'])
+              || incoming().diff(existing()).affectedKeys().hasOnly([
+                'title', 'description', 'priority', 'completed', 'deadline', 'sourceReference', 'order', 'updatedAt'
+              ])
+            );
+          allow delete: if isValidId(userId) && isValidId(docId) && isValidId(taskId) && isVerifiedOwner(userId);
+        }
+
+        match /requirements/{reqId} {
+          allow get: if isValidId(userId) && isValidId(docId) && isValidId(reqId) && isVerifiedOwner(userId);
+          allow list: if isVerifiedOwner(userId) && existing().userId == request.auth.uid;
+          allow create: if isValidId(userId)
+            && isValidId(docId)
+            && isValidId(reqId)
+            && isVerifiedOwner(userId)
+            && isValidRequirementItem(incoming(), userId, docId)
+            && parentDocumentExists(userId, docId)
+            && incoming().createdAt == request.time
+            && incoming().updatedAt == request.time;
+          allow update: if isValidId(userId)
+            && isValidId(docId)
+            && isValidId(reqId)
+            && isVerifiedOwner(userId)
+            && isValidRequirementItem(incoming(), userId, docId)
+            && incoming().userId == existing().userId
+            && incoming().docId == existing().docId
+            && incoming().createdAt == existing().createdAt
+            && incoming().updatedAt == request.time
+            && (
+              incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes', 'updatedAt'])
+              || incoming().diff(existing()).affectedKeys().hasOnly(['name', 'mandatory', 'status', 'sourceQuote', 'notes', 'updatedAt'])
+            );
+          allow delete: if isValidId(userId) && isValidId(docId) && isValidId(reqId) && isVerifiedOwner(userId);
+        }
+
+        match /deadlines/{deadlineId} {
+          allow get: if isValidId(userId) && isValidId(docId) && isValidId(deadlineId) && isVerifiedOwner(userId);
+          allow list: if isVerifiedOwner(userId) && existing().userId == request.auth.uid;
+          allow create: if isValidId(userId)
+            && isValidId(docId)
+            && isValidId(deadlineId)
+            && isVerifiedOwner(userId)
+            && isValidDeadlineEvent(incoming(), userId, docId)
+            && parentDocumentExists(userId, docId)
+            && incoming().createdAt == request.time
+            && incoming().updatedAt == request.time;
+          allow update: if isValidId(userId)
+            && isValidId(docId)
+            && isValidId(deadlineId)
+            && isVerifiedOwner(userId)
+            && isValidDeadlineEvent(incoming(), userId, docId)
+            && incoming().userId == existing().userId
+            && incoming().docId == existing().docId
+            && incoming().createdAt == existing().createdAt
+            && incoming().updatedAt == request.time
+            && (
+              incoming().diff(existing()).affectedKeys().hasOnly(['addedToTasks', 'updatedAt'])
+              || incoming().diff(existing()).affectedKeys().hasOnly([
+                'title', 'category', 'dateText', 'isoDate', 'needsVerification', 'addedToTasks', 'updatedAt'
+              ])
+            );
+          allow delete: if isValidId(userId) && isValidId(docId) && isValidId(deadlineId) && isVerifiedOwner(userId);
+        }
+
+        match /chats/{messageId} {
+          allow get: if isValidId(userId) && isValidId(docId) && isValidId(messageId) && isVerifiedOwner(userId);
+          allow list: if isVerifiedOwner(userId) && existing().userId == request.auth.uid;
+          allow create: if isValidId(userId)
+            && isValidId(docId)
+            && isValidId(messageId)
+            && isVerifiedOwner(userId)
+            && isValidChatMessage(incoming(), userId, docId)
+            && parentDocumentExists(userId, docId)
+            && incoming().createdAt == request.time;
+          allow update: if false;
+          allow delete: if isValidId(userId) && isValidId(docId) && isValidId(messageId) && isVerifiedOwner(userId);
+        }
+      }
+
+      match /aiLogs/{logId} {
+        allow get: if isValidId(userId) && isValidId(logId) && isVerifiedOwner(userId);
+        allow list: if isVerifiedOwner(userId) && existing().userId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(logId)
+          && isVerifiedOwner(userId)
+          && isValidAiLog(incoming(), userId)
+          && incoming().createdAt == request.time;
+        allow update: if false;
+        allow delete: if isValidId(userId) && isValidId(logId) && isVerifiedOwner(userId);
+      }
+
+      match /comparisons/{compId} {
+        allow get: if isValidId(userId) && isValidId(compId) && isVerifiedOwner(userId);
+        allow list: if isVerifiedOwner(userId) && existing().userId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(compId)
+          && isVerifiedOwner(userId)
+          && isValidComparison(incoming(), userId)
+          && incoming().createdAt == request.time;
+        allow update: if false;
+        allow delete: if isValidId(userId) && isValidId(compId) && isVerifiedOwner(userId);
+      }
+    }
+  }
+}
