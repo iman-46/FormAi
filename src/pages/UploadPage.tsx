@@ -9,6 +9,7 @@ import {
   ArrowRight,
   Trash2,
   Play,
+  ShieldCheck,
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { extractDocumentInBrowser, formatBytes } from '../services/documentService';
@@ -165,11 +166,13 @@ export default function UploadPage() {
 
   return (
     <div className="max-w-4xl space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Document Analyzer Upload</h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Files are parsed directly inside your browser using PDF.js and Mammoth. Original binaries never leave your device unless you explicitly request Cloud OCR on a scanned PDF.
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
+            Document Analyzer Upload
+          </h1>
+          <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 max-w-2xl">
+            Files are extracted directly in Chrome using PDF.js and Mammoth. Original files stay private on your device unless you explicitly authorize Cloud OCR for scanned pages.
           </p>
         </div>
         <button
@@ -178,37 +181,44 @@ export default function UploadPage() {
             await loadCompetitionDemo(true);
             navigate('/analysis');
           }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-surface)] text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 whitespace-nowrap"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 min-h-[42px] py-2 rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-surface)] text-xs font-semibold hover:bg-[var(--bg-subtle)] transition-settle whitespace-nowrap shrink-0"
         >
-          <Play className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
-          Load Competition Demo Notice
+          <Play className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+          Load Demo Notice
         </button>
       </div>
 
       {/* Mode Switcher */}
-      <div className="inline-flex p-1 rounded-lg bg-slate-100 dark:bg-slate-900 border border-[var(--border-hairline)]">
-        <button
-          type="button"
-          onClick={() => setTab('file')}
-          className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-            tab === 'file'
-              ? 'bg-white dark:bg-slate-800 text-[var(--text-primary)] shadow-xs'
-              : 'text-slate-500 hover:text-[var(--text-primary)]'
-          }`}
-        >
-          Upload Files (PDF, DOCX, TXT)
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('paste')}
-          className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-            tab === 'paste'
-              ? 'bg-white dark:bg-slate-800 text-[var(--text-primary)] shadow-xs'
-              : 'text-slate-500 hover:text-[var(--text-primary)]'
-          }`}
-        >
-          Paste Raw Text
-        </button>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="grid grid-cols-2 sm:inline-flex p-1 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-hairline)] w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={() => setTab('file')}
+            className={`px-3 sm:px-4 min-h-[38px] py-1.5 text-xs font-semibold rounded-md transition-settle whitespace-nowrap text-center ${
+              tab === 'file'
+                ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xs'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            Upload Files
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('paste')}
+            className={`px-3 sm:px-4 min-h-[38px] py-1.5 text-xs font-semibold rounded-md transition-settle whitespace-nowrap text-center ${
+              tab === 'paste'
+                ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xs'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            Paste Raw Text
+          </button>
+        </div>
+
+        <span className="inline-flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400">
+          <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+          Zero server binary upload
+        </span>
       </div>
 
       {error && (
@@ -230,10 +240,10 @@ export default function UploadPage() {
             setDragging(false);
             void processFiles(e.dataTransfer.files);
           }}
-          className={`rounded-xl border-2 border-dashed p-10 text-center transition-colors bg-[var(--bg-surface)] ${
+          className={`rounded-2xl border-2 border-dashed p-7 sm:p-12 text-center transition-settle bg-dot-matrix ${
             dragging
-              ? 'border-violet-500 bg-violet-50/40 dark:bg-violet-950/20'
-              : 'border-slate-300 dark:border-slate-700'
+              ? 'border-[var(--accent-primary)] bg-indigo-50/40 dark:bg-indigo-950/20'
+              : 'border-[var(--border-hairline)] bg-[var(--bg-surface)]'
           }`}
         >
           <input
@@ -247,30 +257,33 @@ export default function UploadPage() {
             className="hidden"
           />
 
-          <Upload className="w-9 h-9 text-slate-400 mx-auto mb-3" />
-          <h2 className="font-display text-base font-semibold mb-1">
+          <div className="w-12 h-12 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-hairline)] flex items-center justify-center mx-auto mb-4">
+            <Upload className="w-5 h-5 text-[var(--accent-primary)]" />
+          </div>
+
+          <h2 className="font-display text-base sm:text-lg font-bold mb-1.5">
             Drag and drop documents here
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
-            Supports multiple PDF, DOCX, and TXT files up to 25 MB each.
+          <p className="text-xs text-[var(--text-muted)] mb-6 max-w-md mx-auto">
+            Upload single or multiple PDF, DOCX, or TXT files (up to 25 MB each) to extract readable text right inside your browser.
           </p>
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="px-5 py-2.5 rounded-lg bg-[#0F172A] dark:bg-violet-600 text-white text-xs font-semibold hover:opacity-90 transition-opacity"
+            className="w-full sm:w-auto px-5 min-h-[44px] py-2.5 rounded-lg bg-[#111318] dark:bg-[#4F46E5] text-white text-xs font-semibold hover:opacity-90 transition-settle"
           >
-            Choose Files from Computer
+            Choose Files from Device
           </button>
 
           {processingName && (
-            <div className="mt-6 max-w-md mx-auto text-left">
-              <div className="flex justify-between text-xs mb-1.5 font-mono tabular-nums">
-                <span className="truncate">{processingName}</span>
+            <div className="mt-8 max-w-md mx-auto text-left rounded-xl border border-[var(--border-hairline)] bg-[var(--bg-surface)] p-4">
+              <div className="flex justify-between text-xs mb-2 font-mono tabular-nums">
+                <span className="truncate font-medium">{processingName}</span>
                 <span>{progress}%</span>
               </div>
-              <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+              <div className="w-full h-1.5 rounded-full bg-[var(--bg-subtle)] overflow-hidden">
                 <div
-                  className="h-full bg-violet-600 transition-all duration-150"
+                  className="h-full bg-[var(--accent-primary)] transition-all duration-150"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -280,7 +293,7 @@ export default function UploadPage() {
       ) : (
         <form
           onSubmit={(e) => void handlePasteSubmit(e)}
-          className="rounded-xl border border-[var(--border-hairline)] bg-[var(--bg-surface)] p-6 space-y-4"
+          className="rounded-2xl surface-sheet p-6 sm:p-7 space-y-4"
         >
           <div>
             <label htmlFor="paste-title" className="block text-xs font-medium mb-1.5">
@@ -292,7 +305,7 @@ export default function UploadPage() {
               value={pasteTitle}
               onChange={(e) => setPasteTitle(e.target.value)}
               placeholder="e.g., Graduate Fellowship Application Guidelines"
-              className="w-full px-3.5 py-2 text-sm rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-canvas)] focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-canvas)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div>
@@ -306,13 +319,13 @@ export default function UploadPage() {
               value={pasteText}
               onChange={(e) => setPasteText(e.target.value)}
               placeholder="Paste official notice, instructions, terms, or form clauses here..."
-              className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-canvas)] focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-canvas)] focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"
             />
           </div>
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-2">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#0F172A] dark:bg-violet-600 text-white text-xs font-semibold hover:opacity-90"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#111318] dark:bg-[#4F46E5] text-white text-xs font-semibold hover:opacity-90 transition-settle"
             >
               Add to Workspace &amp; Analyze
               <ArrowRight className="w-3.5 h-3.5" />
@@ -323,30 +336,31 @@ export default function UploadPage() {
 
       {/* Session Uploaded Preview Queue */}
       {uploadedBatch.length > 0 && (
-        <section className="rounded-xl border border-[var(--border-hairline)] bg-[var(--bg-surface)] p-6 space-y-4">
-          <h2 className="font-display text-base font-semibold">Processed in This Upload Session</h2>
+        <section className="rounded-2xl surface-sheet p-6 space-y-4">
+          <h2 className="font-display text-base font-bold">Processed in This Session</h2>
           <div className="divide-y divide-[var(--border-hairline)]">
             {uploadedBatch.map((item) => (
-              <div key={item.id} className="py-4 space-y-3">
+              <div key={item.id} className="py-4 first:pt-0 last:pb-0 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-start gap-3 min-w-0">
-                    <FileText className="w-5 h-5 text-slate-400 mt-0.5 shrink-0" />
+                    <FileText className="w-5 h-5 text-[var(--text-muted)] mt-0.5 shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm font-semibold truncate">{item.title}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                        {item.fileName} · {formatBytes(item.fileSize)} · {item.pageCount} pages
+                      <p className="text-xs text-[var(--text-muted)] tabular-nums mt-0.5">
+                        {item.fileName} · {formatBytes(item.fileSize)} · {item.pageCount}{' '}
+                        {item.pageCount === 1 ? 'page' : 'pages'}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-3 shrink-0">
                     {item.extractionStatus === 'ready' ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        Text Extracted ({item.extractedText?.length.toLocaleString()} chars)
+                        Extracted ({item.extractedText?.length.toLocaleString()} chars)
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
                         <AlertTriangle className="w-3.5 h-3.5" />
                         Scanned / No Text Layer
                       </span>
@@ -356,7 +370,7 @@ export default function UploadPage() {
                       type="button"
                       onClick={() => setUploadedBatch((prev) => prev.filter((x) => x.id !== item.id))}
                       aria-label="Dismiss from session list"
-                      className="p-1.5 rounded text-slate-400 hover:text-rose-600"
+                      className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-rose-600 transition-settle"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -364,15 +378,15 @@ export default function UploadPage() {
                 </div>
 
                 {item.extractionStatus === 'needs_ocr' && (
-                  <div className="rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 p-3.5 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-xs text-amber-900 dark:text-amber-200 max-w-xl">
-                      No selectable text was detected in this file. FormWise AI never fabricates extracted text—you can transcribe page 1 using Cloud Multimodal OCR with your consent, or upload a text-based PDF.
+                  <div className="rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 p-4 flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-xs text-amber-900 dark:text-amber-200 max-w-xl leading-relaxed">
+                      No selectable text was detected in this file. FormWise AI never invents text—you can transcribe page 1 via Cloud Multimodal OCR with your consent, or upload a text-based PDF.
                     </p>
                     <button
                       type="button"
                       disabled={ocrLoadingId === item.id}
                       onClick={() => void handleCloudOcr(item)}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 text-xs font-semibold shrink-0 disabled:opacity-60"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-900 text-white dark:bg-amber-500 dark:text-slate-950 text-xs font-semibold shrink-0 disabled:opacity-60 transition-settle"
                     >
                       <ScanText className="w-3.5 h-3.5" />
                       {ocrLoadingId === item.id ? 'Running Cloud OCR...' : 'Run Cloud OCR (Page 1)'}
@@ -381,7 +395,7 @@ export default function UploadPage() {
                 )}
 
                 {item.extractedText && (
-                  <div className="rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-canvas)] p-3 text-xs text-slate-600 dark:text-slate-300 font-mono max-h-32 overflow-y-auto whitespace-pre-wrap">
+                  <div className="rounded-xl border border-[var(--border-hairline)] bg-[var(--bg-canvas)] p-3.5 text-xs text-[var(--text-secondary)] font-mono max-h-32 overflow-y-auto whitespace-pre-wrap">
                     {item.extractedText.slice(0, 700)}
                     {item.extractedText.length > 700 ? '...' : ''}
                   </div>
@@ -392,7 +406,7 @@ export default function UploadPage() {
                     <button
                       type="button"
                       onClick={() => navigate('/analysis')}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0F172A] dark:bg-violet-600 text-white text-xs font-semibold"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#111318] dark:bg-[#4F46E5] text-white text-xs font-semibold hover:opacity-90 transition-settle"
                     >
                       Open Analysis Workspace
                       <ArrowRight className="w-3.5 h-3.5" />

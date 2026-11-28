@@ -25,11 +25,11 @@ export default function ChatPage() {
 
   if (!activeDoc) {
     return (
-      <div className="rounded-xl border border-dashed border-[var(--border-hairline)] bg-[var(--bg-surface)] p-12 text-center max-w-xl mx-auto">
-        <p className="text-sm font-medium mb-2">Select or upload a document first</p>
+      <div className="rounded-2xl border border-dashed border-[var(--border-hairline)] bg-[var(--bg-surface)] p-12 text-center max-w-xl mx-auto">
+        <p className="text-sm font-semibold mb-2">Select or upload a document first</p>
         <Link
           to="/upload"
-          className="inline-flex px-4 py-2 rounded-lg bg-[#0F172A] dark:bg-violet-600 text-white text-xs font-semibold"
+          className="inline-flex px-4 py-2 rounded-lg bg-[#111318] dark:bg-[#4F46E5] text-white text-xs font-semibold"
         >
           Upload Document
         </Link>
@@ -116,31 +116,34 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="max-w-4xl space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="max-w-5xl space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{activeDoc.title}</p>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Ask Your Document</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Multi-turn grounded Q&amp;A powered by Cloud Gemini via Firebase AI Logic (<span className="font-mono">{remoteConfig.cloudModelId}</span>).
+          <p className="text-xs text-[var(--text-muted)]">{activeDoc.title}</p>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight mt-0.5">
+            Ask Your Document
+          </h1>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
+            Multi-turn grounded Q&amp;A powered by Cloud Gemini via Firebase AI Logic (
+            <span className="font-mono">{remoteConfig.cloudModelId}</span>).
           </p>
         </div>
 
-        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-violet-200 dark:border-violet-900/60 bg-violet-50/70 dark:bg-violet-950/30 text-xs font-mono text-violet-700 dark:text-violet-300">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/70 dark:bg-indigo-950/30 text-xs font-mono text-[var(--accent-primary)] shrink-0">
           <Cloud className="w-3.5 h-3.5" />
           CLOUD CHAT SESSION
         </div>
       </div>
 
       {/* Suggested Questions */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex overflow-x-auto sm:flex-wrap pb-1.5 sm:pb-0 gap-2 no-scrollbar">
         {SUGGESTED_QUESTIONS.map((q) => (
           <button
             key={q}
             type="button"
             disabled={sending}
             onClick={() => void sendQuestion(q)}
-            className="px-3 py-1.5 rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-surface)] text-xs text-slate-700 dark:text-slate-300 hover:border-violet-400 transition-colors"
+            className="shrink-0 sm:shrink whitespace-nowrap sm:whitespace-normal min-h-[38px] px-3 py-1.5 rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-surface)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-indigo-400 transition-settle"
           >
             {q}
           </button>
@@ -155,13 +158,15 @@ export default function ChatPage() {
       )}
 
       {/* Conversation Thread */}
-      <div className="rounded-xl border border-[var(--border-hairline)] bg-[var(--bg-surface)] p-5 min-h-[380px] max-h-[540px] overflow-y-auto space-y-4">
+      <div className="rounded-2xl surface-sheet p-4 sm:p-6 min-h-[280px] sm:min-h-[400px] max-h-[52vh] sm:max-h-[560px] overflow-y-auto space-y-4 sm:space-y-5">
         {chatMessages.length === 0 ? (
-          <div className="py-16 text-center">
-            <MessageSquareText className="w-8 h-8 text-slate-400 mx-auto mb-3" />
-            <p className="text-sm font-medium mb-1">Ask anything about "{activeDoc.title}"</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-              Answers are grounded in the extracted document text, include section citations, and flag missing or ambiguous information.
+          <div className="py-12 sm:py-20 text-center">
+            <div className="w-11 h-11 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-hairline)] flex items-center justify-center mx-auto mb-3.5">
+              <MessageSquareText className="w-5 h-5 text-[var(--accent-primary)]" />
+            </div>
+            <p className="text-sm font-semibold mb-1">Ask anything about "{activeDoc.title}"</p>
+            <p className="text-xs text-[var(--text-muted)] max-w-md mx-auto leading-relaxed">
+              Answers are grounded strictly in the extracted document text, include section citations, and warn you when details are missing.
             </p>
           </div>
         ) : (
@@ -171,9 +176,9 @@ export default function ChatPage() {
               className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
             >
               <div
-                className={`max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
+                className={`max-w-[92%] sm:max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                   msg.role === 'user'
-                    ? 'bg-[#0F172A] dark:bg-violet-600 text-white'
+                    ? 'bg-[#111318] dark:bg-[#4F46E5] text-white'
                     : 'border border-[var(--border-hairline)] bg-[var(--bg-canvas)] text-[var(--text-primary)]'
                 }`}
               >
@@ -182,13 +187,15 @@ export default function ChatPage() {
                 {msg.role === 'assistant' && msg.uncertain && (
                   <div className="mt-3 pt-2.5 border-t border-amber-300/40 text-xs text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                    <span>Uncertainty warning: The document may not state this completely; verify with the issuing organization.</span>
+                    <span>
+                      Uncertainty warning: The document may not state this completely; verify with the issuing organization.
+                    </span>
                   </div>
                 )}
 
                 {msg.role === 'assistant' && msg.citations && msg.citations.length > 0 && (
-                  <div className="mt-3 pt-2.5 border-t border-[var(--border-hairline)] text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
-                    <p className="font-semibold">Document references:</p>
+                  <div className="mt-3 pt-2.5 border-t border-[var(--border-hairline)] text-[11px] text-[var(--text-muted)] space-y-1">
+                    <p className="font-semibold text-[var(--text-secondary)]">Document references:</p>
                     {msg.citations.map((c, idx) => (
                       <p key={idx}>• {c}</p>
                     ))}
@@ -196,7 +203,7 @@ export default function ChatPage() {
                 )}
 
                 {msg.role === 'assistant' && (
-                  <p className="mt-2 text-[10px] font-mono text-violet-700 dark:text-violet-400">
+                  <p className="mt-2 text-[10px] font-mono text-[var(--accent-primary)]">
                     inferenceSource: {msg.inferenceSource.toUpperCase()}
                   </p>
                 )}
@@ -206,19 +213,19 @@ export default function ChatPage() {
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="flex gap-2.5">
+      <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           type="text"
           value={input}
           disabled={sending}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a follow-up question about deadlines, fees, eligibility, or sections..."
-          className="flex-1 px-4 py-2.5 text-sm rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-surface)] focus:outline-none focus:ring-2 focus:ring-violet-500"
+          placeholder="Ask about deadlines, fees, eligibility..."
+          className="flex-1 min-w-0 min-h-[44px] px-3.5 sm:px-4 py-2.5 text-sm rounded-xl border border-[var(--border-hairline)] bg-[var(--bg-surface)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
         <button
           type="submit"
           disabled={sending || !input.trim()}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#0F172A] dark:bg-violet-600 text-white text-xs font-semibold hover:opacity-90 disabled:opacity-60 whitespace-nowrap"
+          className="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-[#111318] dark:bg-[#4F46E5] text-white text-xs font-semibold hover:opacity-90 disabled:opacity-60 transition-settle whitespace-nowrap shrink-0"
         >
           <Send className="w-3.5 h-3.5" />
           {sending ? 'Thinking...' : 'Ask'}

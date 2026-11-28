@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GitCompareArrows, Cloud, Play, AlertCircle } from 'lucide-react';
+import { GitCompareArrows, Cloud, Play, AlertCircle, ArrowLeftRight } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { useHybridRunner } from '../hooks/useHybridRunner';
 import { compareTwoDocuments } from '../services/hybridAIService';
@@ -26,6 +26,13 @@ export default function ComparePage() {
 
   const selectedA = documents.find((d) => d.id === docAId) || documents[0];
   const selectedB = documents.find((d) => d.id === docBId) || documents[1];
+
+  const handleSwap = () => {
+    const prevA = selectedA?.id || '';
+    const prevB = selectedB?.id || '';
+    setDocAId(prevB);
+    setDocBId(prevA);
+  };
 
   const handleCompare = async () => {
     if (!selectedA || !selectedB) {
@@ -87,10 +94,12 @@ export default function ComparePage() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Document Comparison</h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
+            Document Comparison
+          </h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">
             Compare two versions or addenda using Cloud AI to detect changed deadlines, fee updates, and conflicting instructions.
           </p>
         </div>
@@ -98,9 +107,9 @@ export default function ComparePage() {
         <button
           type="button"
           onClick={() => void handleLoadDemoPair()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-surface)] text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 whitespace-nowrap"
+          className="w-full sm:w-auto min-h-[42px] inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-surface)] text-xs font-semibold hover:bg-[var(--bg-subtle)] transition-settle whitespace-nowrap shrink-0"
         >
-          <Play className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
+          <Play className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
           Load Demo Notice + Addendum
         </button>
       </div>
@@ -112,8 +121,8 @@ export default function ComparePage() {
       )}
 
       {/* Selector Bar */}
-      <div className="rounded-xl border border-[var(--border-hairline)] bg-[var(--bg-surface)] p-5 grid md:grid-cols-12 gap-4 items-end">
-        <div className="md:col-span-5">
+      <div className="rounded-2xl surface-sheet p-4 sm:p-5 grid md:grid-cols-12 gap-3 items-end">
+        <div className="md:col-span-4">
           <label htmlFor="compare-doc-a" className="block text-xs font-medium mb-1.5">
             Document A (Baseline)
           </label>
@@ -121,7 +130,7 @@ export default function ComparePage() {
             id="compare-doc-a"
             value={selectedA?.id || ''}
             onChange={(e) => setDocAId(e.target.value)}
-            className="w-full px-3 py-2 text-xs rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-canvas)]"
+            className="w-full min-h-[42px] px-3 py-2 text-xs rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-canvas)]"
           >
             {documents.length === 0 && <option value="">No documents available</option>}
             {documents.map((d) => (
@@ -132,6 +141,19 @@ export default function ComparePage() {
           </select>
         </div>
 
+        <div className="md:col-span-1 flex justify-center">
+          <button
+            type="button"
+            onClick={handleSwap}
+            title="Swap baseline and revised documents"
+            aria-label="Swap documents"
+            className="w-full md:w-auto min-h-[40px] inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-canvas)] hover:bg-[var(--bg-subtle)] text-[var(--text-muted)] transition-settle"
+          >
+            <ArrowLeftRight className="w-3.5 h-3.5" />
+            <span className="md:hidden text-xs font-medium">Swap Baseline &amp; Revised</span>
+          </button>
+        </div>
+
         <div className="md:col-span-5">
           <label htmlFor="compare-doc-b" className="block text-xs font-medium mb-1.5">
             Document B (Revised / Addendum)
@@ -140,7 +162,7 @@ export default function ComparePage() {
             id="compare-doc-b"
             value={selectedB?.id || ''}
             onChange={(e) => setDocBId(e.target.value)}
-            className="w-full px-3 py-2 text-xs rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-canvas)]"
+            className="w-full min-h-[42px] px-3 py-2 text-xs rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-canvas)]"
           >
             {documents.length === 0 && <option value="">No documents available</option>}
             {documents.map((d) => (
@@ -156,7 +178,7 @@ export default function ComparePage() {
             type="button"
             disabled={running || documents.length < 2 || !remoteConfig.enableDocumentCompare}
             onClick={() => void handleCompare()}
-            className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#0F172A] dark:bg-violet-600 text-white text-xs font-semibold hover:opacity-90 disabled:opacity-50"
+            className="w-full min-h-[42px] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#111318] dark:bg-[#4F46E5] text-white text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-settle whitespace-nowrap"
           >
             <GitCompareArrows className="w-3.5 h-3.5" />
             {running ? 'Comparing...' : 'Compare'}
@@ -173,11 +195,12 @@ export default function ComparePage() {
 
       {displayed ? (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="rounded-xl surface-sheet px-5 py-3.5 flex flex-wrap items-center justify-between gap-2 text-xs">
             <span className="font-semibold text-[var(--text-primary)]">
-              {displayed.docATitle} vs. {displayed.docBTitle}
+              {displayed.docATitle} <span className="text-[var(--text-muted)] font-normal">vs.</span>{' '}
+              {displayed.docBTitle}
             </span>
-            <span className="inline-flex items-center gap-1.5 font-mono text-violet-700 dark:text-violet-400">
+            <span className="inline-flex items-center gap-1.5 font-mono text-[var(--accent-primary)]">
               <Cloud className="w-3.5 h-3.5" />
               {displayed.inferenceSource.toUpperCase()}
             </span>
@@ -187,16 +210,16 @@ export default function ComparePage() {
             <ComparisonSection title="Changed Deadlines" items={displayed.changedDeadlines} tone="amber" />
             <ComparisonSection title="Conflicting Instructions" items={displayed.conflictingInstructions} tone="rose" />
             <ComparisonSection title="Different Requirements" items={displayed.differentRequirements} tone="blue" />
-            <ComparisonSection title="Important Changes" items={displayed.importantChanges} tone="violet" />
+            <ComparisonSection title="Important Changes" items={displayed.importantChanges} tone="indigo" />
             <ComparisonSection title="Key Differences" items={displayed.differences} tone="slate" />
             <ComparisonSection title="Similarities" items={displayed.similarities} tone="emerald" />
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-[var(--border-hairline)] bg-[var(--bg-surface)] p-12 text-center">
-          <GitCompareArrows className="w-8 h-8 text-slate-400 mx-auto mb-3" />
-          <p className="text-sm font-medium mb-1">No comparisons run yet</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+        <div className="rounded-2xl border border-dashed border-[var(--border-hairline)] bg-[var(--bg-surface)] p-12 text-center">
+          <GitCompareArrows className="w-8 h-8 text-[var(--text-muted)] mx-auto mb-3" />
+          <p className="text-sm font-semibold mb-1">No comparisons run yet</p>
+          <p className="text-xs text-[var(--text-muted)]">
             Upload two documents or click Load Demo Notice + Addendum to compare original rules against revised instructions.
           </p>
         </div>
@@ -212,24 +235,29 @@ function ComparisonSection({
 }: {
   title: string;
   items: string[];
-  tone: 'amber' | 'rose' | 'blue' | 'violet' | 'slate' | 'emerald';
+  tone: 'amber' | 'rose' | 'blue' | 'indigo' | 'slate' | 'emerald';
 }) {
   const titleColors: Record<typeof tone, string> = {
     amber: 'text-amber-700 dark:text-amber-400',
     rose: 'text-rose-700 dark:text-rose-400',
     blue: 'text-blue-700 dark:text-blue-400',
-    violet: 'text-violet-700 dark:text-violet-400',
-    slate: 'text-slate-700 dark:text-slate-300',
+    indigo: 'text-[var(--accent-primary)]',
+    slate: 'text-[var(--text-primary)]',
     emerald: 'text-emerald-700 dark:text-emerald-400',
   };
 
   return (
-    <section className="rounded-xl border border-[var(--border-hairline)] bg-[var(--bg-surface)] p-5">
-      <h2 className={`font-display text-sm font-semibold mb-3 ${titleColors[tone]}`}>{title}</h2>
+    <section className="rounded-xl surface-sheet p-5">
+      <div className="flex items-center justify-between mb-3 pb-2 border-b border-[var(--border-hairline)]">
+        <h2 className={`font-display text-sm font-bold ${titleColors[tone]}`}>{title}</h2>
+        <span className="font-mono text-[11px] text-[var(--text-muted)] tabular-nums">
+          {items.length}
+        </span>
+      </div>
       {items.length === 0 ? (
-        <p className="text-xs text-slate-500 dark:text-slate-400">None identified between these documents.</p>
+        <p className="text-xs text-[var(--text-muted)]">None identified between these documents.</p>
       ) : (
-        <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+        <ul className="space-y-2 text-xs text-[var(--text-secondary)] leading-relaxed">
           {items.map((item, idx) => (
             <li key={idx}>• {item}</li>
           ))}
